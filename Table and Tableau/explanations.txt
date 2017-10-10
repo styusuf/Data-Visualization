@@ -1,0 +1,9 @@
+Good table design:
+
+1. First, i filtered my table to get just the 2012 data
+2. For better visual understanding, i sorted the data by country alphabetically.
+3. I did some simple alignment of the data for each column. Then i added a blank line after the data for each country. I removed repetition by deleting the cells with duplicate year and country values. Finally, i changed the font style to Times New Romans
+
+Tableau:
+1. I selected the crime rates that i wanted to display. Then i created a line graph of the data those crime rates.
+2. Finally, i made the thickness of the line proportional to the crime rate value for that crime over the years.

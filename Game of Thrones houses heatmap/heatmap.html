@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <style>
+      rect.bordered {
+        stroke: #E6E6E6;
+        stroke-width:2px;   
+      }
+
+      text.mono {
+        font-size: 9pt;
+        font-family: Consolas, courier;
+        fill: #aaa;
+      }
+
+      text.axis-workweek {
+        fill: #000;
+      }
+
+      text.axis-worktime {
+        fill: #000;
+      }
+    </style>
+    <script type="text/javascript" src="../lib/d3.v3.min.js"></script>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <div id="dataset-picker">
+    </div>
+    <script type="text/javascript">
+
+      // Referenced from: http://bl.ocks.org/tjdecke/5558084
+
+
+      var margin = { top: 50, right: 0, bottom: 100, left: 80 },
+          width = 960 - margin.left - margin.right,
+          height = 430 - margin.top - margin.bottom,
+          gridSize = Math.floor(width / 24),
+          legendElementWidth = gridSize + 5,
+          buckets = 9,
+          colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"], // alternatively colorbrewer.YlGnBu[9]
+          episode = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+          house = ["Baratheon", "Greyjoy", "Lannister", "Martell", "Stark", "Targaryen", "Tyrell"],
+          house_num = ["1", "2", "3", "4", "5", "6", "7"];
+          
+
+      var svg = d3.select("#chart").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var houseLabels = svg.selectAll(".houseLabel")
+          .data(house)
+          .enter().append("text")
+            .text(function (d) { return d; })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * gridSize; })
+            .style("text-anchor", "end")
+            .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+            .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "houseLabel mono axis" : "houseLabel mono axis"); });
+
+      var episodeLabels = svg.selectAll(".episodeLabel")
+          .data(episode)
+          .enter().append("text")
+            .text(function(d) { return d; })
+            .attr("x", function(d, i) { return i * gridSize; })
+            .attr("y", 0)
+            .style("text-anchor", "middle")
+            .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+            .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "episodeLabel mono axis" : "episodeLabel mono axis"); });
+
+        svg.append("text")      // text label for the x axis
+          .attr("x", 400 )
+          .attr("y",  -5 )
+          .style("text-anchor", "middle")
+          .text("Episode")
+          .attr("font-weight", "bold");
+
+
+        svg.append("text")      // text label for the x axis
+          .attr("x", -30 )
+          .attr("y", 270 )
+          .style("text-anchor", "middle")
+          .text("House")
+          .attr("font-weight", "bold");
+
+
+        
+          svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px") 
+            .style("font-weight", "bold")  
+            .text("Visualization of House Appearances");
+          
+
+      var heatmapChart = function(season) {
+          dataset = []
+          d3.csv('heatmap.csv', function(data) {
+              for (i=0; i < data.length; i++) {
+                console.log("row loop in progress")
+                if (+data[i].season === +season) {
+                  console.log("Check season=1 ran")
+                  for (j = 0; j < house_num.length; j++) {
+                    console.log("house loop")
+                    dataset.push([  +house_num[j], +data[i].episode, +data[i].season, +data[i][ house[j] ]  ])
+                    }
+                  }
+                };
+              
+              var colorScale = d3.scale.quantile()
+                  .domain([0, buckets - 1, d3.max(dataset, function (d) { return d[3]; })])
+                  .range(colors);
+              
+              var cards = svg.selectAll(".hour")
+                  .data(dataset, function(d) {return d[0]+':'+d[1];});
+
+              cards.append("title");
+
+              cards.enter().append("rect")
+                  .attr("x", function(d) { return (d[1] - 1) * gridSize; })
+                  .attr("y", function(d) { return (d[0] - 1) * gridSize; })
+                  .attr("rx", 4)
+                  .attr("ry", 4)
+                  .attr("class", "hour bordered")
+                  .attr("width", gridSize)
+                  .attr("height", gridSize)
+                  .style("fill", colors[0]);
+
+              cards.transition().duration(1000)
+                  .style("fill", function(d) { return colorScale(d[3]); });
+
+              cards.select("title").text(function(d) { return d[3]; });
+              
+              cards.exit().remove();
+
+              var legend = svg.selectAll(".legend")
+                  .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+              legend.enter().append("g")
+                  .attr("class", "legend");
+
+              legend.append("rect")
+                .attr("x", function(d, i) { return legendElementWidth * i; })
+                .attr("y", height)
+                .attr("width", legendElementWidth)
+                .attr("height", gridSize / 2)
+                .style("fill", function(d, i) { return colors[i]; });
+
+              legend.append("text")
+                .attr("class", "mono")
+                .text(function(d) { return Math.round(d); })
+                .attr("x", function(d, i) { return legendElementWidth * i; })
+                .attr("y", height + gridSize);
+
+              legend.exit().remove(); 
+          });
+        }
+
+        var seasons = ["1", "2", "3", "4", "5", "6"]
+
+        heatmapChart(seasons[0])
+
+        s_text = d3.select("body").append("div").text("Season:").attr('class', 's_text');
+
+        var select = d3.select('body')
+            .append('select')
+            .attr('class','select')
+            .on('change',onchange)
+            .style('right', '7px')
+
+        var options = select
+          .selectAll('option')
+          .data(seasons).enter()
+          .append('option')
+          .text(function (d) { return d; });
+
+        function onchange() {
+          selectValue = d3.select('select').property('value')
+          heatmapChart(selectValue)
+        };
+
+    </script>
+  </body>
+</html>

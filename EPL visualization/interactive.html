@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+    <head>
+        <style>
+
+            body {
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                width: 1500px;
+                height: 600px;
+                position: relative;
+            }
+
+            svg {
+                width: 100%;
+                height: 100%;
+                position: center;
+            }
+
+            .toolTip {
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                position: absolute;
+                display: none;
+                width: auto;
+                height: auto;
+                background: none repeat scroll 0 0 white;
+                border: 0 none;
+                border-radius: 8px 8px 8px 8px;
+                box-shadow: -3px 3px 15px #888888;
+                color: black;
+                font: 12px sans-serif;
+                padding: 5px;
+                text-align: center;
+            }
+
+            text {
+                font: 10px sans-serif;
+                color: white;
+            }
+            text.value {
+                font-size: 120%;
+                fill: white;
+            }
+
+            .axisHorizontal path{
+                fill: none;
+            }
+
+            .axisHorizontal .tick line {
+                stroke-width: 1;
+                stroke: rgba(0, 0, 0, 0.2);
+            }
+
+            .bar {
+                fill: steelblue;
+                fill-opacity: .9;
+            }
+
+            body { font: 12px Arial;}
+
+            .chart path { 
+                stroke: red;
+                stroke-width: 2;
+                fill: none;
+            }
+
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: grey;
+                stroke-width: 1;
+                shape-rendering: crispEdges;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <script src="../lib/d3.v3.min.js"></script>
+        <script>
+
+            // Referenced from: http://bl.ocks.org/juan-cb/faf62e91e3c70a99a306
+
+            data = [
+                
+                {club:'Manchester United',value:{year_2013:3165, year_2014:2810, year_2015:3100, year_2016:3317, year_2017:4583}},
+                {club:'Chelsea',value:{year_2013:901, year_2014:868, year_2015:1370, year_2016:1661, year_2017:1845}},
+                {club:'Manchester City',value:{year_2013:689, year_2014:863, year_2015:1380, year_2016:1921, year_2017:2083}},
+                {club:'Liverpool',value:{year_2013:651, year_2014:704, year_2015:982, year_2016:1548, year_2017:1492}},
+                {club:'Arsenal',value:{year_2013:1326, year_2014:1331, year_2015:1310, year_2016:2017, year_2017:1932}}
+                
+                ]; 
+            for (i = 0; i < data.length; i++){
+                var values = [ data[i].value.year_2013, data[i].value.year_2014, data[i].value.year_2015, data[i].value.year_2016, data[i].value.year_2017 ]
+                console.log(data[i].value.year_2013);
+                data[i].values = values
+            }
+
+            var years = ["2013", "2014", "2015", "2016", "2017"]
+
+            var div = d3.select("body").append("div").attr("class", "toolTip");
+
+            var axisMargin = 20,
+                    margin = 40,
+                    valueMargin = 4,
+                    width = 900,//parseInt(d3.select('body').style('width'), 10),
+                    height = parseInt(d3.select('body').style('height'), 10),
+                    barHeight = (height-axisMargin-margin*2)* 0.4/data.length,
+                    barPadding = (height-axisMargin-margin*2)*0.6/data.length,
+                    data, bar, svg, scale, xAxis, labelWidth = 0;
+
+            max = d3.max(data, function(d) { return (d.value.year_2013 + d.value.year_2014 + d.value.year_2015 + d.value.year_2016 + d.value.year_2017); });
+
+            svg = d3.select('body')
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+
+            bar = svg.selectAll("g")
+                    .data(data)
+                    .enter()
+                    .append("g");
+
+            bar.attr("class", "bar")
+                    .attr("cx",0)
+                    .attr("transform", function(d, i) {
+                        return "translate(" + margin + "," + (i * (barHeight + barPadding) + barPadding) + ")";
+                    });
+
+            bar.append("text")
+                    .attr("class", "label")
+                    .attr("y", barHeight / 2)
+                    .attr("dy", ".35em") //vertical align middle
+                    .text(function(d){
+                        return d.club;
+                    }).each(function() {
+                labelWidth = Math.ceil(Math.max(labelWidth, this.getBBox().width));
+            });
+
+            scale = d3.scale.linear()
+                    .domain([0, max])
+                    .range([0, width - margin*2 - labelWidth]);
+
+            xAxis = d3.svg.axis()
+                    .scale(scale)
+                    .tickSize(-height + 2*margin + axisMargin)
+                    .orient("bottom");
+
+            bar.append("rect")
+                    .attr("transform", "translate("+labelWidth+", 0)")
+                    .attr("height", barHeight)
+                    .attr("width", function(d){
+                        return scale(d.value.year_2013 + d.value.year_2014 + d.value.year_2015 + d.value.year_2016 + d.value.year_2017);
+                    });
+
+            bar.append("text")
+                    .attr("class", "value")
+                    .attr("y", barHeight / 2)
+                    .attr("dx", -valueMargin + labelWidth) //margin right
+                    .attr("dy", ".35em") //vertical align middle
+                    .attr("text-anchor", "end")
+                    .text(function(d){
+                        return ("$" + (d.value.year_2013 + d.value.year_2014 + d.value.year_2015 + d.value.year_2016 + d.value.year_2017));
+                    })
+                    .attr("x", function(d){
+                        var width = this.getBBox().width;
+                        return Math.max(width + valueMargin, scale(d.value.year_2013 + d.value.year_2014 + d.value.year_2015 + d.value.year_2016 + d.value.year_2017));
+                    });
+
+            bar
+                    .on("mouseover", function(d){
+                        // Set the dimensions of the canvas / graph
+                        d3.select(this).select('rect').attr("fill", "red");
+                        createChart(d.values);
+
+                    });
+                    
+
+            bar
+                    .on("mouseout", function(d){
+                        d3.select(this).select('rect').attr("fill", "steelblue");
+                        d3.select(".chart").remove()
+                    });
+
+            svg.insert("g",":first-child")
+                    .attr("class", "axisHorizontal")
+                    .attr("transform", "translate(" + (margin + labelWidth) + ","+ (height - axisMargin - margin)+")")
+                    .call(xAxis);
+
+            // Referenced from: http://bl.ocks.org/d3noob/b3ff6ae1c120eea654b5
+
+            var createChart = function(data) {
+
+                // Set the dimensions of the canvas / graph
+                var margin_chart = {top: 30, right: 20, bottom: 30, left: 50},
+                    width_chart = 400 - margin_chart.left - margin_chart.right,
+                    height_chart = 270 - margin_chart.top - margin_chart.bottom;
+
+
+                // Set the ranges
+                var x = d3.scale.linear().range([0, width_chart]);
+                var y = d3.scale.linear().range([height_chart, 0]);
+
+                // Define the axes
+                var xAxis = d3.svg.axis().scale(x)
+                    .orient("bottom").ticks(5).tickFormat(d3.format("d"));
+
+                var yAxis = d3.svg.axis().scale(y)
+                    .orient("left").ticks(5);
+
+                // Define the line
+                var valueline = d3.svg.line()
+                    .x(function(d, i) { return x(i+2013) ; })
+                    .y(function(d) { return y(d); });
+                    
+                // Adds the svg canvas
+                var chart = svg.append("g")
+                    //.append("svg")
+                    .attr("width", 100)
+                    .attr("height", height_chart + margin_chart.top + margin_chart.bottom)
+                    .attr("class", "chart")
+                    .attr("transform", "translate(" + 920 + "," + margin_chart.top + ")")
+
+
+                    // Scale the range of the data
+                    x.domain([2013,2017]);
+                    y.domain([0, d3.max(data, function(d) { return d; })]);
+
+                    // Add the valueline path.
+                    chart.append("path")
+                        .attr("class", "line")
+                        .attr("d", valueline(data));
+
+                    // Add the X Axis
+                    chart.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height_chart + ")")
+                        .call(xAxis);
+
+                    // Add the Y Axis
+                    chart.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis);
+
+                    // Add x-axis label
+                    chart.append("text")             
+                      .attr("transform",
+                            "translate(" + (width_chart/2) + " ," + 
+                                           (height_chart + margin_chart.top + 20) + ")")
+                      .style("text-anchor", "middle")
+                      .style("font-size", "14px")
+                      .text("Year");
+
+                    // Add y-axais label
+                    chart.append("text")
+                      .attr("transform", "rotate(-90)")
+                      .attr("y", 0 - margin_chart.left)
+                      .attr("x",0 - (height_chart / 2))
+                      .attr("dy", "1em")
+                      .style("text-anchor", "middle")
+                      .style("font-size", "14px")
+                      .text("Value");  
+
+                };
+
+        </script>
+    </body>
+</html>

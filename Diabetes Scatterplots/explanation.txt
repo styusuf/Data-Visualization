@@ -1,0 +1,6 @@
+2. Because there are a lot of data points in this dataset, it can be hard to visualize all the nodes on the graph. To help visually, I used CSS to take off the fill and added a stroke. That helped to visualize the nodes when they are stacked upon each other. Using triangles and circles to denote classes also help in visual understanding, adds an classification component to the scatterplot where positive classes are red and negative classes are blue.
+
+4. Square root scaling stretched out the axis from 0 to 200. I think this would be helpful when most of your data points are in the 0-200 range. This would stretch out the axis so that you can easily see the distribution of the nodes in the lower range.
+
+The Log scale gets rid of the data points that have a 0 y value. It adjusts the scatterplot so that we can actually see all the data points on the graph.
+
